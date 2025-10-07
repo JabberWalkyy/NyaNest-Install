@@ -1,0 +1,20 @@
+{
+  "name": "nyanest",
+  "productName": "NyaNest 🐾",
+  "description": "A cozy autumn browser with purr-fect squishcore vibes.",
+  "version": "v0.0.1",
+  "author": "Senpai",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^38.2.1",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.Nya.Nest",
+    "productName": "NyaNest",
+    "icon": "assets/WETPaw.ico"
+  }
+}

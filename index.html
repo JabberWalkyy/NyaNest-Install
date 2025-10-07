@@ -1,0 +1,363 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>NyaNest 🐾</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #2e1f14; /* deep autumn brown */
+        color: #fdf6e3; /* soft parchment */
+        font-family: "Segoe UI", sans-serif;
+        overflow: hidden;
+        -webkit-user-select: none;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Top toolbar */
+      #toolbar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px;
+        background-color: #5c3d2e; /* warm chestnut */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        z-index: 10;
+        flex: 0 0 auto;
+        height: 48px;
+      }
+
+      #urlbar {
+        flex: 1;
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: none;
+        outline: none;
+        background-color: #7a5239; /* maple bark */
+        color: #fff8e1;
+        height: 32px;
+      }
+
+      button {
+        background: #a86c4d; /* cider glaze */
+        color: #fff8e1;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.15s;
+        height: 32px;
+      }
+      button:hover { background: #c07a58; /* toasted caramel */ }
+
+      /* Tab bar */
+      #tabBar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px;
+        background-color: #4a2f20; /* rich soil */
+        overflow-x: auto;
+        white-space: nowrap;
+        flex: 0 0 auto;
+        height: 44px;
+      }
+
+      .tabButton {
+        background: #a86c4d;
+        color: #fff8e1;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+      }
+      .tabButton.active { background: #d88f6b; /* pumpkin spice */ }
+      .closeBtn { color: #ff9999; cursor: pointer; font-weight: 600; }
+
+      /* main view area uses flex so it always fills remaining space */
+      #viewContainer {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        flex: 1 1 auto; /* fill leftover height */
+        position: relative;
+        overflow: hidden;
+        background-color: #2e1f14;
+
+      /* wrapper holds a webview + overlay */
+      .webview-wrapper {
+        position: absolute;
+        inset: 0; /* top:0; left:0; right:0; bottom:0 */
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        display: none;
+      }
+      .webview-wrapper.active { display: block; z-index: 1; }
+
+      webview {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+        background-color: #1e1e1e !important;
+        z-index: 1;
+      }
+
+      /* Scroll shrine (bookmarks popup) */
+      #scrollShrine {
+        position: absolute;
+        top: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(90,60,40,0.96); /* warm overlay */
+        border: 1px solid #a86c4d;
+        border-radius: 8px;
+        padding: 10px;
+        display: none;
+        width: 80%;
+        max-width: 640px;
+        max-height: 320px;
+        overflow-y: auto;
+        z-index: 40;
+      }
+      #scrollShrine button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        margin: 6px 0;
+        background-color: #7a5239;
+        color: #fff8e1;
+        padding: 8px;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toolbar">
+      <button id="backBtn">⬅</button>
+      <button id="forwardBtn">➡</button>
+      <input id="urlbar" type="text" placeholder="Enter URL..." />
+      <button id="goBtn">Go</button>
+      <button id="newTabBtn">➕ Tab</button>
+      <button id="showBookmarksBtn">📜 Bookmarks</button>
+    </div>
+
+    <div id="tabBar"></div>
+    <div id="viewContainer"></div>
+    <div id="scrollShrine"></div>
+
+    <script>
+      // Elements
+      const tabBar = document.getElementById('tabBar');
+      const viewContainer = document.getElementById('viewContainer');
+      const urlbar = document.getElementById('urlbar');
+      const goBtn = document.getElementById('goBtn');
+      const newTabBtn = document.getElementById('newTabBtn');
+      const backBtn = document.getElementById('backBtn');
+      const forwardBtn = document.getElementById('forwardBtn');
+      const showBookmarksBtn = document.getElementById('showBookmarksBtn');
+      const scrollShrine = document.getElementById('scrollShrine');
+
+      // State
+      const tabs = [];
+      let activeTabId = null;
+
+      // Helpers
+      function createWrapper(url) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'webview-wrapper';
+
+        const webview = document.createElement('webview');
+        webview.allowpopups = true;
+        webview.setAttribute('allowpopups', 'true');
+
+        // Set user agent as attribute for initial load
+        webview.setAttribute('useragent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36');
+
+        webview.src = url;
+
+        wrapper.appendChild(webview);
+
+        // Handle new window requests as new tabs
+        webview.addEventListener('new-window', (e) => {
+          e.preventDefault();
+          createTab(e.url);
+        });
+
+        // Handle load failures
+        webview.addEventListener('did-fail-load', (e) => {
+          if (e.errorCode === -3) return;
+          webview.executeJavaScript(`
+            document.body.innerHTML = '<div style="padding: 20px; color: #ff6666; text-align: center;"><h1>Error ${e.errorCode}: ${e.errorDescription}</h1><p>Failed to load ${e.validatedURL}</p></div>';
+          `);
+        });
+
+        return { wrapper, webview };
+      }
+
+      function createTab(initialUrl = 'https://duckduckgo.com') {
+        const id = 'tab-' + Date.now();
+
+        // tab button
+        const tabBtn = document.createElement('button');
+        tabBtn.className = 'tabButton';
+        tabBtn.innerHTML = `<span>Amber Tab</span><span class="closeBtn">❌</span>`;
+        tabBar.appendChild(tabBtn);
+
+        // webview wrapper
+        const { wrapper, webview } = createWrapper(initialUrl);
+        viewContainer.appendChild(wrapper);
+
+        // store tab
+        tabs.push({ id, tabBtn, wrapper, webview });
+
+        // events
+        tabBtn.querySelector('.closeBtn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeTab(id);
+        });
+        tabBtn.addEventListener('click', () => switchTab(id));
+
+        // update title when finished loading
+        webview.addEventListener('did-finish-load', () => {
+          try {
+            const title = webview.getTitle() || new URL(webview.getURL()).hostname;
+            tabBtn.querySelector('span').textContent = title;
+          } catch (err) {
+            tabBtn.querySelector('span').textContent = webview.getURL() || 'Amber Tab';
+          }
+          if (activeTabId === id) urlbar.value = webview.getURL();
+        });
+
+        // initially switch to the new tab
+        switchTab(id);
+      }
+
+      function switchTab(id) {
+        tabs.forEach(t => {
+          const active = t.id === id;
+          t.tabBtn.classList.toggle('active', active);
+          t.wrapper.classList.toggle('active', active);
+          if (active) {
+            activeTabId = id;
+            try { urlbar.value = t.webview.getURL(); } catch (e) { urlbar.value = t.webview.src; }
+          }
+        });
+      }
+
+      function removeTab(id) {
+        const idx = tabs.findIndex(t => t.id === id);
+        if (idx === -1) return;
+        const t = tabs[idx];
+        t.tabBtn.remove();
+        t.wrapper.remove();
+        tabs.splice(idx, 1);
+        if (tabs.length) switchTab(tabs[0].id);
+        else activeTabId = null;
+      }
+
+      // Controls
+      goBtn.addEventListener('click', () => {
+        let txt = urlbar.value.trim();
+        if (!txt || !activeTabId) return;
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (!tab) return;
+
+        let url;
+        if (txt.includes(' ') || !txt.includes('.')) {
+          url = 'https://duckduckgo.com/?q=' + encodeURIComponent(txt);
+        } else {
+          url = txt.includes('://') ? txt : 'https://' + txt;
+        }
+        tab.webview.loadURL(url);
+      });
+
+      urlbar.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') goBtn.click();
+      });
+
+      newTabBtn.addEventListener('click', () => createTab());
+
+      backBtn.addEventListener('click', () => {
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (tab && tab.webview.canGoBack()) tab.webview.goBack();
+      });
+
+      forwardBtn.addEventListener('click', () => {
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (tab && tab.webview.canGoForward()) tab.webview.goForward();
+      });
+
+      // Bookmarks (scroll shrine)
+      showBookmarksBtn.addEventListener('click', () => {
+        if (scrollShrine.style.display === 'block') {
+          scrollShrine.style.display = 'none';
+          return;
+        }
+        scrollShrine.style.display = 'block';
+        const bookmarks = JSON.parse(localStorage.getItem('amberBookmarks') || '[]');
+        scrollShrine.innerHTML = '';
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = '⭐ Save Current Page';
+        saveBtn.addEventListener('click', () => {
+          const tab = tabs.find(t => t.id === activeTabId);
+          if (!tab) return alert('No active tab!');
+          const url = tab.webview.getURL();
+          if (!url) return alert('No URL available yet.');
+          if (!bookmarks.includes(url)) {
+            bookmarks.push(url);
+            localStorage.setItem('amberBookmarks', JSON.stringify(bookmarks));
+            alert('Scroll added to shrine!');
+          } else alert('That scroll already exists, nya~');
+        });
+        scrollShrine.appendChild(saveBtn);
+
+        if (!bookmarks.length) {
+          const p = document.createElement('div');
+          p.textContent = 'No scrolls in your shrine yet!';
+          p.style.color = '#bbb';
+          scrollShrine.appendChild(p);
+        } else {
+          bookmarks.forEach((b, index) => {
+            const bbtn = document.createElement('button');
+            bbtn.textContent = b;
+              // Left-click to open
+            bbtn.addEventListener('click', () => {
+              const tab = tabs.find(t => t.id === activeTabId);
+              if (tab) tab.webview.loadURL(b);
+              scrollShrine.style.display = 'none';
+            });
+
+            // Right-click to delete
+            bbtn.addEventListener('contextmenu', (e) => {
+              e.preventDefault();
+              if (confirm(`Delete this bookmark?\n${b}`)) {
+                bookmarks.splice(index, 1);
+                localStorage.setItem('amberBookmarks', JSON.stringify(bookmarks));
+                bbtn.remove();
+              }
+            });
+
+            scrollShrine.appendChild(bbtn);
+          });
+        }
+      });
+
+      // Start with one tab (DuckDuckGo)
+      createTab('https://duckduckgo.com');
+    </script>
+  </body>
+</html>
