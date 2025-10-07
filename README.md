@@ -9,26 +9,27 @@ NyaNest is a lightweight, Electron-powered browser designed for comfort, clarity
 • 	🧙‍♀️ Bookmark shrine toggle
 • 	🐾 Custom splash chant on launch (coming soon!)
 • 	🔮 Built with Electron 38.2.1
-• 	💖 Designed by Senpai with love and lore
+• 	💖 Designed by Senpai with lore
 
 📦 Installation
 Download the latest installer from the Releases page.
-Double-click the  to install NyaNest on your Windows machine.
-
+Double-click the .exe to install NyaNest on your Windows machine.
 
 🧪 Development Setup (Optional)
 If you want to run NyaNest from source:
-
+git clone https://github.com/JabberWalkyy/NyaNest-Install.git
+cd NyaNest-Install
+npm install
+npm start
 
 🐉 Lore & Rituals
 NyaNest is part of a mythic lineage of cozy software shrines. Every version is a seasonal offering.
 Future updates may include:
-• 	Splash chants
+• 	The right mouse button menu
 • 	Animated tab transitions
-• 	Bookmark rituals
-• 	Pact crystal integrations (for fun!)
+• 	Shrine UI
+• 	Tribal offerings (for fun!)
 
 💌 Credits
 Created by Senpai
-Icon: 
 Built with Electron Builder
