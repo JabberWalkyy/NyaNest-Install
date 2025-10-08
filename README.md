@@ -5,7 +5,6 @@ NyaNest is a lightweight, browser designed for comfort, clarity, and cozy search
 • 	🍂 Soft tab layout with autumnal colors
 • 	🧙‍♀️ Bookmark shrine toggle
 • 	🐾 More UI and animation on launch (coming soon! or possibly never.)
-• 	🔮 Built with Electron 38.2.1
 • 	💖 Designed by Melloden
 
 📦 Installation:
