@@ -1,30 +1,33 @@
-✨ What Is NyaNest?
-NyaNest is a lightweight, browser designed for comfort, clarity, and cozy searches.
+NyaNest
 
-🐾 Features:
-• 	🍂 Soft tab layout with autumnal colors
-• 	🧙‍♀️ Bookmark shrine toggle
-• 	🐾 More UI and animation on launch (coming soon! or possibly never.)
-• 	💖 Designed by Melloden
+**NyaNest** is a small experimental browser built using Electron. It is currently bare-bones simple. It runs and installs but has several known issues and is not yet suitable for everyday use.
 
-📦 Installation:
-Download the latest installer from the Releases page.
-Click the .exe to install NyaNest on your Windows machine.
 
-🧪 Development Setup (Optional):
-If you want to run NyaNest from source:
+Current Features:
+- Basic tab layout and plain color palate
+- Simple bookmark panel
+- Installer for Windows
+
+
+Current Issues:
+- UI is basic
+- After bookmarking a URL, you are unable to type in a search bar until the browser is
+restarted
+- Missing right mouse button menu and other standard browser functions
+
+
+To install NyaNest:
+1. Visit the latest Releases page(https://github.com/JabberWalkyy/NyaNest-Install/releases)
+2. Download the latest .exe setup file.
+3. Run the installer on a Windows device.
+
+Note: Windows will likely show a warning about "unknown publishers". To proceed, click “More
+info” → “Run anyway.”
+
+
+To run NyaNest from source code(Optional):
+In bash (CMD Terminal)
 git clone https://github.com/JabberWalkyy/NyaNest-Install.git
 cd NyaNest-Install
 npm install
 npm start
-
-🐉 More info:
-NyaNest versions is a mythic lineage of cozy software shrines.
-Future updates may include:
-• 	The right mouse button menu
-• 	Animated tab transitions
-• 	Shrine UI
-• 	Tribal offerings (for fun!)
-
-💌 Credits:
-Created by Melloden
